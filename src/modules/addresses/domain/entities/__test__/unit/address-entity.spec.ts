@@ -1,5 +1,5 @@
+import { ClientEntity } from '@/modules/clients/domain/entities';
 import { AddressEntity } from '../../address-entity';
-import { ClientEntity } from '@/modules/clients/domain/entities/client-entity';
 
 describe('AddressEntity', () => {
   it('should create an address with required properties', () => {

@@ -1,10 +1,10 @@
-import { BaseUseCase } from '@/core/domain/usecases/base-usecase';
-import { AddressRepository } from '@/modules/addresses/domain/repositories/address-repository';
-import { Injectable } from '@nestjs/common';
-import { ClientRepository } from '../repositories/client-repository';
-import { AddressEntity } from '@/modules/addresses/domain/entities/address-entity';
-import { ClientEntity } from '../entities/client-entity';
 import { BadRequestError } from '@/core/domain/errors/base-errors';
+import { BaseUseCase } from '@/core/domain/usecases/base-usecase';
+import { AddressEntity } from '@/modules/addresses/domain/entities';
+import { AddressRepository } from '@/modules/addresses/domain/repositories';
+import { Injectable } from '@nestjs/common';
+import { ClientEntity } from '../entities';
+import { ClientRepository } from '../repositories';
 
 interface Input {
   name: string;

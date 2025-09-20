@@ -4,8 +4,8 @@ import {
 } from '@/core/domain/repositories/base-paginated-repository';
 import { BaseUseCase } from '@/core/domain/usecases/base-usecase';
 import { Injectable } from '@nestjs/common';
-import { ClientEntity } from '../entities/client-entity';
-import { ClientRepository } from '../repositories/client-repository';
+import { ClientEntity } from '../entities';
+import { ClientRepository } from '../repositories';
 
 type Input = FindPaginatedParams;
 

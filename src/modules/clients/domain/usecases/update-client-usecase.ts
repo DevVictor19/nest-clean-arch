@@ -1,13 +1,11 @@
+import { BadRequestError } from '@/core/domain/errors/base-errors';
 import { BaseUseCase } from '@/core/domain/usecases/base-usecase';
+import { AddressEntity } from '@/modules/addresses/domain/entities';
+import { AddressRepository } from '@/modules/addresses/domain/repositories';
 import { Injectable } from '@nestjs/common';
-import { ClientEntity } from '../entities/client-entity';
-import { AddressEntity } from '@/modules/addresses/domain/entities/address-entity';
-import { ClientRepository } from '../repositories/client-repository';
-import {
-  BadRequestError,
-  NotFoundError,
-} from '@/core/domain/errors/base-errors';
-import { AddressRepository } from '@/modules/addresses/domain/repositories/address-repository';
+import { NotFoundError } from 'rxjs';
+import { ClientEntity } from '../entities';
+import { ClientRepository } from '../repositories';
 
 interface Input {
   clientId: string;

@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
+import { AddressEntity } from '@/modules/addresses/domain/entities';
+import { NotFoundError } from 'rxjs';
+import { ClientEntity } from '../../../entities';
 import { FindByIdClientUseCase } from '../../find-by-id-client-usecase';
-import { NotFoundError } from '@/core/domain/errors/base-errors';
-import { ClientEntity } from '../../../entities/client-entity';
-import { AddressEntity } from '@/modules/addresses/domain/entities/address-entity';
 
 describe('FindByIdClientUseCase', () => {
   let clientRepository: any;

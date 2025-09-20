@@ -1,13 +1,11 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
+import { BadRequestError } from '@/core/domain/errors/base-errors';
+import { AddressEntity } from '@/modules/addresses/domain/entities';
+import { NotFoundError } from 'rxjs';
+import { ClientEntity } from '../../../entities';
 import { UpdateClientUseCase } from '../../update-client-usecase';
-import {
-  BadRequestError,
-  NotFoundError,
-} from '@/core/domain/errors/base-errors';
-import { ClientEntity } from '../../../entities/client-entity';
-import { AddressEntity } from '@/modules/addresses/domain/entities/address-entity';
 
 describe('UpdateClientUseCase', () => {
   let clientRepository: any;

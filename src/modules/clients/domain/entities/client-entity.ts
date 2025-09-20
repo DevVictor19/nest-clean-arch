@@ -1,8 +1,8 @@
 import {
-  BaseEntity,
   BaseEntityProps,
+  BaseEntity,
 } from '@/core/domain/entities/base-entity';
-import { AddressEntity } from '@/modules/addresses/domain/entities/address-entity';
+import { AddressEntity } from '@/modules/addresses/domain/entities';
 
 export type ClientProps = BaseEntityProps & {
   name: string;

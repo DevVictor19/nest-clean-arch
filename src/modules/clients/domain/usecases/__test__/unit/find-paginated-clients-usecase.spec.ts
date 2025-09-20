@@ -2,12 +2,12 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 import {
-  FilterOperator,
   FindPaginatedParams,
+  FilterOperator,
   PaginatedResult,
 } from '@/core/domain/repositories/base-paginated-repository';
+import { ClientEntity } from '../../../entities';
 import { FindPaginatedClientsUseCase } from '../../find-paginated-clients-usecase';
-import { ClientEntity } from '../../../entities/client-entity';
 
 describe('FindPaginatedClientsUseCase', () => {
   let clientRepository: any;

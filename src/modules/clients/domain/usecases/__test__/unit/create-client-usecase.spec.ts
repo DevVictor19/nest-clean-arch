@@ -2,9 +2,9 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 import { BadRequestError } from '@/core/domain/errors/base-errors';
-import { AddressEntity } from '@/modules/addresses/domain/entities/address-entity';
+import { AddressEntity } from '@/modules/addresses/domain/entities';
+import { ClientEntity } from '../../../entities';
 import { CreateClientUseCase } from '../../create-client-usecase';
-import { ClientEntity } from '../../../entities/client-entity';
 
 describe('CreateClientUseCase', () => {
   let clientRepository: any;
