@@ -1,0 +1,71 @@
+import { BaseUseCase } from '@/core/domain/usecases/base-usecase';
+import { AddressRepository } from '@/modules/addresses/domain/repositories/address-repository';
+import { Injectable } from '@nestjs/common';
+import { ClientRepository } from '../repositories/client-repository';
+import { AddressEntity } from '@/modules/addresses/domain/entities/address-entity';
+import { ClientEntity } from '../entities/client-entity';
+import { BadRequestError } from '@/core/domain/errors/base-errors';
+
+interface Input {
+  name: string;
+  email: string;
+  phone: string;
+  addresses: AddressEntity[];
+}
+
+type Output = ClientEntity;
+
+enum CreateClientError {
+  EMAIL_ALREADY_EXISTS = 'EMAIL_ALREADY_EXISTS',
+  PHONE_ALREADY_EXISTS = 'PHONE_ALREADY_EXISTS',
+  ZIP_CODE_ALREADY_EXISTS = 'ZIP_CODE_ALREADY_EXISTS',
+}
+
+@Injectable()
+export class CreateClientUseCase implements BaseUseCase<Input, Output> {
+  constructor(
+    private readonly clientRepository: ClientRepository,
+    private readonly addressRepository: AddressRepository,
+  ) {}
+
+  async execute(input: Input): Promise<Output> {
+    const [clientWithSameEmail, clientWithSamePhone, existentAddresses] =
+      await Promise.all([
+        this.clientRepository.findByEmail(input.email),
+        this.clientRepository.findByPhone(input.phone),
+        this.addressRepository.findByZipCodes(
+          input.addresses.map((address) => address.zipCode),
+        ),
+      ]);
+
+    if (clientWithSameEmail !== null) {
+      throw new BadRequestError(
+        'Client with same email already exists',
+        CreateClientError.EMAIL_ALREADY_EXISTS,
+      );
+    }
+
+    if (clientWithSamePhone !== null) {
+      throw new BadRequestError(
+        'Client with same phone already exists',
+        CreateClientError.PHONE_ALREADY_EXISTS,
+      );
+    }
+
+    if (existentAddresses.length > 0) {
+      throw new BadRequestError(
+        'Some addresses with same zip code already exists',
+        CreateClientError.ZIP_CODE_ALREADY_EXISTS,
+      );
+    }
+
+    const client = new ClientEntity({
+      name: input.name,
+      email: input.email,
+      phone: input.phone,
+      addresses: input.addresses,
+    });
+
+    return this.clientRepository.create(client);
+  }
+}
