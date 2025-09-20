@@ -1,27 +1,26 @@
 export interface ApiErrorJSON {
   message: string;
-  httpStatus?: number;
-  errorCode?: string;
+  httpStatus: number;
+  errorCode: string;
   timestamp: number;
 }
 
-export type AppErrorProps = {
+export interface AppErrorProps {
   message: string;
   internal?: string;
-  httpStatus?: number;
-  errorCode?: string;
-  error?: Error;
-};
+  httpStatus: number;
+  errorCode: string;
+}
 
-export class AppError {
-  private message: string;
-  private internal?: string;
-  private timestamp: number;
-  private httpStatus?: number;
-  private errorCode?: string;
-  private error?: Error;
+export class AppError extends Error {
+  message: string;
+  internal?: string;
+  httpStatus: number;
+  errorCode: string;
+  timestamp: number;
 
   constructor(props: AppErrorProps) {
+    super(props.message);
     Object.assign(this, props);
     this.timestamp = new Date().getTime();
   }
@@ -33,10 +32,6 @@ export class AppError {
       errorCode: this.errorCode,
       timestamp: this.timestamp,
     };
-  }
-
-  getError(): Error | undefined {
-    return this.error;
   }
 
   getInternal(): string | undefined {
