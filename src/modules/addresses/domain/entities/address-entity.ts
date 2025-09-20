@@ -1,5 +1,19 @@
-import { BaseEntity } from '@/core/domain/entities/base-entity';
+import {
+  BaseEntity,
+  BaseEntityProps,
+} from '@/core/domain/entities/base-entity';
 import { ClientEntity } from '@/modules/clients/domain/entities/client-entity';
+
+export type AddressProps = BaseEntityProps & {
+  street: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  country: string;
+  complement?: string;
+  clientId: string;
+  client?: ClientEntity;
+};
 
 export class AddressEntity extends BaseEntity {
   street: string;
@@ -11,7 +25,7 @@ export class AddressEntity extends BaseEntity {
   clientId: string;
   client?: ClientEntity;
 
-  constructor(props: Partial<AddressEntity>) {
+  constructor(props: AddressProps) {
     const { id, createdAt, updatedAt, ...rest } = props;
     super({ id, createdAt, updatedAt });
     Object.assign(this, rest);

@@ -23,7 +23,12 @@ describe('AddressEntity', () => {
   });
 
   it('should accept complement and client as optional properties', () => {
-    const client = new ClientEntity({ id: 'client-2', name: 'Cliente X' });
+    const client = new ClientEntity({
+      id: 'client-2',
+      name: 'Cliente X',
+      email: 'cliente.x@email.com',
+      phone: '123456789',
+    });
     const address = new AddressEntity({
       street: 'Rua B',
       city: 'Cidade Y',
