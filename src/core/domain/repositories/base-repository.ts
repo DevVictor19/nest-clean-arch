@@ -2,6 +2,7 @@ import { BaseEntity } from '../entities/base-entity';
 
 export abstract class BaseRepository<T extends BaseEntity> {
   abstract create(entity: T): Promise<T>;
+  abstract createMany(entities: T[]): Promise<void>;
   abstract findById(id: string): Promise<T | null>;
   abstract findAll(): Promise<T[]>;
   abstract update(entity: T): Promise<T>;
