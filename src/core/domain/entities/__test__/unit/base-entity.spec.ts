@@ -1,4 +1,4 @@
-import { BaseEntity } from '../base-entity';
+import { BaseEntity } from '../../base-entity';
 
 describe('BaseEntity', () => {
   it('should create an entity with default values', () => {

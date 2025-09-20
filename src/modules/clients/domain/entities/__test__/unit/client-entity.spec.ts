@@ -1,4 +1,4 @@
-import { ClientEntity } from '../client-entity';
+import { ClientEntity } from '../../client-entity';
 import { AddressEntity } from '@/modules/addresses/domain/entities/address-entity';
 
 describe('ClientEntity', () => {
