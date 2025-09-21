@@ -1,9 +1,11 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
-import { BadRequestError } from '@/core/domain/errors/base-errors';
+import {
+  BadRequestError,
+  NotFoundError,
+} from '@/core/domain/errors/base-errors';
 import { AddressEntity } from '@/modules/addresses/domain/entities';
-import { NotFoundError } from 'rxjs';
 import { ClientEntity } from '../../../entities';
 import { UpdateClientUseCase } from '../../update-client-usecase';
 
@@ -29,6 +31,7 @@ describe('UpdateClientUseCase', () => {
     };
     addressRepository = {
       findByZipCodes: jest.fn(),
+      deleteByClientId: jest.fn(),
     };
     useCase = new UpdateClientUseCase(clientRepository, addressRepository);
   });
@@ -104,19 +107,73 @@ describe('UpdateClientUseCase', () => {
     clientRepository.findById.mockResolvedValue(client);
     addressRepository.findByZipCodes.mockResolvedValue([]);
     clientRepository.update.mockResolvedValue(client);
+    addressRepository.deleteByClientId.mockResolvedValue(undefined);
     const addresses = [
-      new AddressEntity({
+      {
         street: 'Main St',
         city: 'Metropolis',
         state: 'NY',
         zipCode: '10001',
         country: 'USA',
+        complement: 'Apt 101',
         clientId: client.id,
-      }),
+      },
     ];
     const input = { clientId: client.id, addresses };
+    await useCase.execute(input);
+    expect(clientRepository.update).toHaveBeenCalledWith(client);
+    expect(addressRepository.deleteByClientId).toHaveBeenCalledWith(client.id);
+  });
+  it('should update multiple fields at once', async () => {
+    clientRepository.findById.mockResolvedValue(client);
+    clientRepository.findByEmail.mockResolvedValue(null);
+    clientRepository.findByPhone.mockResolvedValue(null);
+    addressRepository.findByZipCodes.mockResolvedValue([]);
+    clientRepository.update.mockResolvedValue(client);
+    addressRepository.deleteByClientId.mockResolvedValue(undefined);
+    const addresses = [
+      {
+        street: 'Main St',
+        city: 'Metropolis',
+        state: 'NY',
+        zipCode: '10001',
+        country: 'USA',
+        complement: 'Apt 101',
+        clientId: client.id,
+      },
+    ];
+    const input = {
+      clientId: client.id,
+      name: 'Jane Doe',
+      email: 'jane@example.com',
+      phone: '9999999999',
+      addresses,
+    };
     const result = await useCase.execute(input);
-    expect(result.addresses).toBe(addresses);
+    expect(result.name).toBe('Jane Doe');
+    expect(result.email).toBe('jane@example.com');
+    expect(result.phone).toBe('9999999999');
+    expect(clientRepository.update).toHaveBeenCalledWith(client);
+    expect(addressRepository.deleteByClientId).toHaveBeenCalledWith(client.id);
+  });
+
+  it('should not update anything if no fields provided', async () => {
+    clientRepository.findById.mockResolvedValue(client);
+    clientRepository.update.mockResolvedValue(client);
+    const input = { clientId: client.id };
+    const result = await useCase.execute(input);
+    expect(result).toEqual(client);
+    expect(clientRepository.update).toHaveBeenCalledWith(client);
+  });
+
+  it('should update only one field if only one provided', async () => {
+    clientRepository.findById.mockResolvedValue(client);
+    clientRepository.update.mockResolvedValue(client);
+    const input = { clientId: client.id, name: 'Only Name' };
+    const result = await useCase.execute(input);
+    expect(result.name).toBe('Only Name');
+    expect(result.email).toBe('john@example.com');
+    expect(result.phone).toBe('1234567890');
     expect(clientRepository.update).toHaveBeenCalledWith(client);
   });
 

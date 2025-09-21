@@ -1,18 +1,29 @@
-import { BadRequestError } from '@/core/domain/errors/base-errors';
+import {
+  BadRequestError,
+  NotFoundError,
+} from '@/core/domain/errors/base-errors';
 import { BaseUseCase } from '@/core/domain/usecases/base-usecase';
-import { AddressEntity } from '@/modules/addresses/domain/entities';
 import { AddressRepository } from '@/modules/addresses/domain/repositories';
 import { Injectable } from '@nestjs/common';
-import { NotFoundError } from 'rxjs';
 import { ClientEntity } from '../entities';
 import { ClientRepository } from '../repositories';
+import { AddressEntity } from '@/modules/addresses/domain/entities';
+
+interface Address {
+  street: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  country: string;
+  complement?: string;
+}
 
 interface Input {
   clientId: string;
   name?: string;
   email?: string;
   phone?: string;
-  addresses?: AddressEntity[];
+  addresses?: Address[];
 }
 
 type Output = ClientEntity;
@@ -87,7 +98,20 @@ export class UpdateClientUseCase implements BaseUseCase<Input, Output> {
         );
       }
 
-      client.addresses = input.addresses;
+      await this.addressRepository.deleteByClientId(client.id);
+
+      client.addresses = input.addresses.map(
+        (a) =>
+          new AddressEntity({
+            street: a.street,
+            city: a.city,
+            state: a.state,
+            zipCode: a.zipCode,
+            country: a.country,
+            complement: a.complement,
+            clientId: client.id,
+          }),
+      );
     }
 
     return this.clientRepository.update(client);
