@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { BasePostgresPaginatedRepository } from '@/core/infra/repositories';
 import { Inject, Injectable } from '@nestjs/common';
 import { AddressEntity } from '../../domain/entities';
@@ -8,19 +6,7 @@ import {
   Connection,
   type ConnectionManager,
 } from '@/core/infra/database/database-module';
-
-interface AddressModel {
-  id: string;
-  street: string;
-  city: string;
-  state: string;
-  zipCode: string;
-  country: string;
-  complement?: string;
-  clientId: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
+import { AddressModel } from '../models';
 
 @Injectable()
 export class AddressPostgresRepository
@@ -35,14 +21,14 @@ export class AddressPostgresRepository
   }
 
   async findByZipCodes(zipCodes: string[]): Promise<AddressEntity[]> {
-    const results = await this.manager(this.tableName)
+    const results = await this.manager<AddressModel>(this.tableName)
       .select('*')
       .whereIn('zip_code', zipCodes);
     return this.toCollection(results);
   }
 
   async findByClientId(clientId: string): Promise<AddressEntity[]> {
-    const results = await this.manager(this.tableName)
+    const results = await this.manager<AddressModel>(this.tableName)
       .select('*')
       .where('client_id', clientId);
     return this.toCollection(results);
@@ -58,31 +44,31 @@ export class AddressPostgresRepository
       street: entity.street,
       city: entity.city,
       state: entity.state,
-      zipCode: entity.zipCode,
+      zip_code: entity.zipCode,
       country: entity.country,
       complement: entity.complement,
-      clientId: entity.clientId,
-      createdAt: entity.createdAt,
-      updatedAt: entity.updatedAt,
+      client_id: entity.clientId,
+      created_at: entity.createdAt,
+      updated_at: entity.updatedAt,
     };
   }
 
-  toEntity(data: any): AddressEntity {
+  toEntity(data: AddressModel): AddressEntity {
     return new AddressEntity({
       id: data.id,
       street: data.street,
       city: data.city,
       state: data.state,
-      zipCode: data.zipCode,
+      zipCode: data.zip_code,
       country: data.country,
       complement: data.complement,
-      clientId: data.clientId,
-      createdAt: data.createdAt,
-      updatedAt: data.updatedAt,
+      clientId: data.client_id,
+      createdAt: data.created_at,
+      updatedAt: data.updated_at,
     });
   }
 
-  toCollection(data: any[]): AddressEntity[] {
+  toCollection(data: AddressModel[]): AddressEntity[] {
     return data.map((item) => this.toEntity(item));
   }
 }

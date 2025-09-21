@@ -1,1 +1,1 @@
-export * from './clients-postgres-repository';
+export * from './client-postgres-repository';

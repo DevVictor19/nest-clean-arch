@@ -58,7 +58,7 @@ export class ClientsController
   async findAll(
     @Query('limit', new DefaultValuePipe(10)) limit: number,
     @Query('page', new DefaultValuePipe(1)) page: number,
-    @Query('sortBy', new DefaultValuePipe('createdAt')) sortBy: string,
+    @Query('sortBy', new DefaultValuePipe('created_at')) sortBy: string,
     @Query('sortOrder', new DefaultValuePipe('desc')) sortOrder: 'asc' | 'desc',
   ): Promise<PaginatedResultDto<ClientDto>> {
     const result = await this.findPaginatedClientsUseCase.execute({
