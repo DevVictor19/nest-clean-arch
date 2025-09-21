@@ -27,9 +27,7 @@ export abstract class BasePostgresRepository<
   }
 
   async findById(id: string): Promise<T | null> {
-    const row: unknown = await this.manager(this.tableName)
-      .where({ id })
-      .first();
+    const row = (await this.manager(this.tableName).where({ id }).first()) as U;
     return row ? this.toEntity(row) : null;
   }
 
@@ -40,7 +38,7 @@ export abstract class BasePostgresRepository<
 
   async update(entity: T): Promise<T> {
     const model = this.toModel(entity);
-    model.updatedAt = new Date();
+    model.updated_at = new Date();
     const result = await this.manager(this.tableName)
       .where({ id: model.id })
       .update(model)
@@ -53,6 +51,6 @@ export abstract class BasePostgresRepository<
   }
 
   abstract toModel(entity: T): U;
-  abstract toEntity(data: any): T;
-  abstract toCollection(data: any[]): T[];
+  abstract toEntity(model: U): T;
+  abstract toCollection(models: U[]): T[];
 }
