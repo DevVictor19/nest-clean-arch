@@ -61,7 +61,7 @@ export abstract class BasePostgresPaginatedRepository<
       query = query.orderBy(params.sort.sortBy, params.sort.sortOrder ?? 'asc');
     }
 
-    const totalQuery = query.clone();
+    const totalQuery = query.clone().clear('order');
     const totalResult =
       await totalQuery.count<{ count: string }[]>('* as count');
     const total = parseInt(totalResult[0].count, 10);
