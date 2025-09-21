@@ -1,4 +1,4 @@
-import { BasePaginatedRepository } from '@/core/domain/repositories/base-paginated-repository';
+import { BasePaginatedRepository } from '@/core/domain/repositories';
 import { ClientEntity } from '../entities';
 
 export abstract class ClientRepository extends BasePaginatedRepository<ClientEntity> {
