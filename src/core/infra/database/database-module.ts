@@ -25,7 +25,7 @@ export type ConnectionManager = Knex;
                 : false,
           },
           pool: {
-            min: 0,
+            min: 2,
             max: 10,
           },
         });
