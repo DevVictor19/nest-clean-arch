@@ -1,9 +1,12 @@
 import { BaseEntity } from '@/core/domain/entities/base-entity';
 import { type ConnectionManager } from '../database/database-module';
 import { BaseRepository } from '@/core/domain/repositories';
+import { BaseModel } from '../models';
 
-export abstract class BasePostgresRepository<T extends BaseEntity>
-  implements BaseRepository<T>
+export abstract class BasePostgresRepository<
+  T extends BaseEntity,
+  U extends BaseModel,
+> implements BaseRepository<T>
 {
   constructor(
     protected readonly manager: ConnectionManager,
@@ -11,14 +14,16 @@ export abstract class BasePostgresRepository<T extends BaseEntity>
   ) {}
 
   async create(entity: T): Promise<T> {
+    const model = this.toModel(entity);
     const result = await this.manager(this.tableName)
-      .insert(entity)
+      .insert(model)
       .returning('*');
     return this.toEntity(result[0]);
   }
 
   async createMany(entities: T[]): Promise<void> {
-    await this.manager(this.tableName).insert(entities);
+    const models = entities.map((entity) => this.toModel(entity));
+    await this.manager(this.tableName).insert(models);
   }
 
   async findById(id: string): Promise<T | null> {
@@ -34,10 +39,11 @@ export abstract class BasePostgresRepository<T extends BaseEntity>
   }
 
   async update(entity: T): Promise<T> {
-    entity.updatedAt = new Date();
+    const model = this.toModel(entity);
+    model.updatedAt = new Date();
     const result = await this.manager(this.tableName)
-      .where({ id: entity.id })
-      .update(entity)
+      .where({ id: model.id })
+      .update(model)
       .returning('*');
     return this.toEntity(result[0]);
   }
@@ -46,6 +52,7 @@ export abstract class BasePostgresRepository<T extends BaseEntity>
     await this.manager(this.tableName).where({ id }).del();
   }
 
+  abstract toModel(entity: T): U;
   abstract toEntity(data: any): T;
   abstract toCollection(data: any[]): T[];
 }

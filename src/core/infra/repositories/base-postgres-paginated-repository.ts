@@ -6,9 +6,13 @@ import {
   PaginatedResult,
   FilterOperator,
 } from '@/core/domain/repositories';
+import { BaseModel } from '../models';
 
-export abstract class BasePostgresPaginatedRepository<T extends BaseEntity>
-  extends BasePostgresRepository<T>
+export abstract class BasePostgresPaginatedRepository<
+    T extends BaseEntity,
+    U extends BaseModel,
+  >
+  extends BasePostgresRepository<T, U>
   implements BasePaginatedRepository<T>
 {
   async findPaginated(
