@@ -9,9 +9,22 @@ import {
   type ConnectionManager,
 } from '@/core/infra/database/database-module';
 
+interface AddressModel {
+  id: string;
+  street: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  country: string;
+  complement?: string;
+  clientId: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 @Injectable()
 export class AddressPostgresRepository
-  extends BasePostgresPaginatedRepository<AddressEntity>
+  extends BasePostgresPaginatedRepository<AddressEntity, AddressModel>
   implements AddressRepository
 {
   constructor(
@@ -37,6 +50,21 @@ export class AddressPostgresRepository
 
   async deleteByClientId(clientId: string): Promise<void> {
     await this.manager(this.tableName).where('client_id', clientId).del();
+  }
+
+  toModel(entity: AddressEntity): AddressModel {
+    return {
+      id: entity.id,
+      street: entity.street,
+      city: entity.city,
+      state: entity.state,
+      zipCode: entity.zipCode,
+      country: entity.country,
+      complement: entity.complement,
+      clientId: entity.clientId,
+      createdAt: entity.createdAt,
+      updatedAt: entity.updatedAt,
+    };
   }
 
   toEntity(data: any): AddressEntity {
