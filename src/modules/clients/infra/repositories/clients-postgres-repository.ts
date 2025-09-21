@@ -9,9 +9,18 @@ import {
   type ConnectionManager,
 } from '@/core/infra/database/database-module';
 
+interface ClientModel {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 @Injectable()
 export class ClientsPostgresRepository
-  extends BasePostgresPaginatedRepository<ClientEntity>
+  extends BasePostgresPaginatedRepository<ClientEntity, ClientModel>
   implements ClientRepository
 {
   constructor(
@@ -101,6 +110,17 @@ export class ClientsPostgresRepository
   async findByPhone(phone: string): Promise<ClientEntity | null> {
     const result = await this.manager(this.tableName).where({ phone }).first();
     return result ? this.toEntity(result) : null;
+  }
+
+  toModel(entity: ClientEntity): ClientModel {
+    return {
+      id: entity.id,
+      name: entity.name,
+      email: entity.email,
+      phone: entity.phone,
+      createdAt: entity.createdAt,
+      updatedAt: entity.updatedAt,
+    };
   }
 
   toEntity(data: any): ClientEntity {
