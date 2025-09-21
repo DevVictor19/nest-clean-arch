@@ -66,7 +66,7 @@ export class ClientsPostgresRepository
             name: entity.name,
             email: entity.email,
             phone: entity.phone,
-            updatedAt: entity.updatedAt,
+            updatedAt: new Date(),
           })
           .returning('*');
 
@@ -86,7 +86,7 @@ export class ClientsPostgresRepository
           name: entity.name,
           email: entity.email,
           phone: entity.phone,
-          updatedAt: entity.updatedAt,
+          updatedAt: new Date(),
         })
         .returning('*');
       return this.toEntity(clientRow);

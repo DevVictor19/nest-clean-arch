@@ -34,6 +34,7 @@ export abstract class BasePostgresRepository<T extends BaseEntity>
   }
 
   async update(entity: T): Promise<T> {
+    entity.updatedAt = new Date();
     const result = await this.manager(this.tableName)
       .where({ id: entity.id })
       .update(entity)
