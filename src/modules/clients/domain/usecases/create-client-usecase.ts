@@ -6,11 +6,20 @@ import { Injectable } from '@nestjs/common';
 import { ClientEntity } from '../entities';
 import { ClientRepository } from '../repositories';
 
+interface Address {
+  street: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  country: string;
+  complement?: string;
+}
+
 interface Input {
   name: string;
   email: string;
   phone: string;
-  addresses: AddressEntity[];
+  addresses: Address[];
 }
 
 type Output = ClientEntity;
@@ -63,8 +72,20 @@ export class CreateClientUseCase implements BaseUseCase<Input, Output> {
       name: input.name,
       email: input.email,
       phone: input.phone,
-      addresses: input.addresses,
     });
+
+    client.addresses = input.addresses.map(
+      (a) =>
+        new AddressEntity({
+          street: a.street,
+          city: a.city,
+          state: a.state,
+          zipCode: a.zipCode,
+          country: a.country,
+          complement: a.complement,
+          clientId: client.id,
+        }),
+    );
 
     return this.clientRepository.create(client);
   }
