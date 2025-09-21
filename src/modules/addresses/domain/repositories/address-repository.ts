@@ -4,4 +4,5 @@ import { AddressEntity } from '../entities';
 export abstract class AddressRepository extends BasePaginatedRepository<AddressEntity> {
   abstract findByZipCodes(zipCodes: string[]): Promise<AddressEntity[]>;
   abstract findByClientId(clientId: string): Promise<AddressEntity[]>;
+  abstract deleteByClientId(clientId: string): Promise<void>;
 }
