@@ -85,7 +85,7 @@ export class UpdateClientUseCase implements BaseUseCase<Input, Output> {
       client.phone = input.phone;
     }
 
-    if (input.addresses !== undefined) {
+    if (input.addresses !== undefined && input.addresses.length > 0) {
       const zipCodes = input.addresses.map((address) => address.zipCode);
       const addresses = await this.addressRepository.findByZipCodes(zipCodes);
       const isFromAnotherClient = addresses.some(
