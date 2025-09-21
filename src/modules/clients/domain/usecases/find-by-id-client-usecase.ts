@@ -1,9 +1,9 @@
 import { BaseUseCase } from '@/core/domain/usecases/base-usecase';
 import { AddressRepository } from '@/modules/addresses/domain/repositories';
 import { Injectable } from '@nestjs/common';
-import { NotFoundError } from 'rxjs';
 import { ClientEntity } from '../entities';
 import { ClientRepository } from '../repositories';
+import { NotFoundError } from '@/core/domain/errors/base-errors';
 
 interface Input {
   clientId: string;

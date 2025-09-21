@@ -2,9 +2,9 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 import { AddressEntity } from '@/modules/addresses/domain/entities';
-import { NotFoundError } from 'rxjs';
 import { ClientEntity } from '../../../entities';
 import { FindByIdClientUseCase } from '../../find-by-id-client-usecase';
+import { NotFoundError } from '@/core/domain/errors/base-errors';
 
 describe('FindByIdClientUseCase', () => {
   let clientRepository: any;
