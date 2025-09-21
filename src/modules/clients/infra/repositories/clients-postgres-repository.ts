@@ -21,6 +21,78 @@ export class ClientsPostgresRepository
     super(manager, 'clients');
   }
 
+  async create(entity: ClientEntity): Promise<ClientEntity> {
+    if (entity.addresses && entity.addresses.length > 0) {
+      const result = await this.manager.transaction(async (trx) => {
+        const [clientRow] = await trx(this.tableName)
+          .insert({
+            name: entity.name,
+            email: entity.email,
+            phone: entity.phone,
+            createdAt: entity.createdAt,
+            updatedAt: entity.updatedAt,
+          })
+          .returning('*');
+
+        const addressesToInsert = entity.addresses!.map((address) => ({
+          ...address,
+          clientId: clientRow.id,
+        }));
+        await trx('addresses').insert(addressesToInsert);
+
+        return clientRow as Record<string, unknown>;
+      });
+      return this.toEntity(result);
+    } else {
+      const [clientRow] = await this.manager(this.tableName)
+        .insert({
+          name: entity.name,
+          email: entity.email,
+          phone: entity.phone,
+          createdAt: entity.createdAt,
+          updatedAt: entity.updatedAt,
+        })
+        .returning('*');
+      return this.toEntity(clientRow);
+    }
+  }
+
+  async update(entity: ClientEntity): Promise<ClientEntity> {
+    if (entity.addresses && entity.addresses.length > 0) {
+      const result = await this.manager.transaction(async (trx) => {
+        const [clientRow] = await trx(this.tableName)
+          .where({ id: entity.id })
+          .update({
+            name: entity.name,
+            email: entity.email,
+            phone: entity.phone,
+            updatedAt: entity.updatedAt,
+          })
+          .returning('*');
+
+        const addressesToInsert = entity.addresses!.map((address) => ({
+          ...address,
+          clientId: clientRow.id,
+        }));
+        await trx('addresses').insert(addressesToInsert);
+
+        return clientRow as Record<string, unknown>;
+      });
+      return this.toEntity(result);
+    } else {
+      const [clientRow] = await this.manager(this.tableName)
+        .where({ id: entity.id })
+        .update({
+          name: entity.name,
+          email: entity.email,
+          phone: entity.phone,
+          updatedAt: entity.updatedAt,
+        })
+        .returning('*');
+      return this.toEntity(clientRow);
+    }
+  }
+
   async findByEmail(email: string): Promise<ClientEntity | null> {
     const result = await this.manager(this.tableName).where({ email }).first();
     return result ? this.toEntity(result) : null;
