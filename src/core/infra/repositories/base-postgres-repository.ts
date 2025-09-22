@@ -22,6 +22,7 @@ export abstract class BasePostgresRepository<
   }
 
   async createMany(entities: T[]): Promise<void> {
+    if (entities.length === 0) return;
     const models = entities.map((entity) => this.toModel(entity));
     await this.manager(this.tableName).insert(models);
   }
