@@ -18,8 +18,19 @@ export abstract class BasePostgresPaginatedRepository<
   async findPaginated(
     params?: FindPaginatedParams,
   ): Promise<PaginatedResult<T>> {
-    const page = params?.page ?? 1;
-    const limit = params?.limit ?? 10;
+    let page = 1;
+    let limit = 10;
+
+    if (params?.page !== undefined && params.page > 0) {
+      page = params.page;
+    }
+
+    if (params?.limit !== undefined) {
+      if (params.limit > 0 && params.limit <= 100) {
+        limit = params.limit;
+      }
+    }
+
     const offset = (page - 1) * limit;
 
     let query = this.manager(this.tableName);
