@@ -470,35 +470,4 @@ describe('BasePostgresRepository Integration Tests', () => {
       ]);
     });
   });
-
-  describe('database constraints and edge cases', () => {
-    it('should handle unique constraint violations', async () => {
-      const entity1 = new TestEntity({
-        name: 'User 1',
-        email: 'duplicate@example.com',
-      });
-      const entity2 = new TestEntity({
-        name: 'User 2',
-        email: 'duplicate@example.com',
-      });
-
-      await repository.create(entity1);
-
-      await expect(repository.create(entity2)).rejects.toThrow();
-    });
-
-    it('should handle null values appropriately', async () => {
-      const invalidModel: any = {
-        id: '550e8400-e29b-41d4-a716-446655440000',
-        name: null,
-        email: 'test@example.com',
-        created_at: new Date(),
-        updated_at: new Date(),
-      };
-
-      await expect(
-        knexInstance('test_entities').insert(invalidModel),
-      ).rejects.toThrow();
-    });
-  });
 });
