@@ -134,13 +134,13 @@ describe('BasePostgresRepository Integration Tests', () => {
       expect(result.createdAt).toBeInstanceOf(Date);
       expect(result.updatedAt).toBeInstanceOf(Date);
 
-      const dbRecord = (await knexInstance('test_entities')
+      const dbRecord = await knexInstance<TestModel>('test_entities')
         .where({ id: result.id })
-        .first()) as TestModel;
+        .first();
 
       expect(dbRecord).toBeDefined();
-      expect(dbRecord.name).toBe(entityData.name);
-      expect(dbRecord.email).toBe(entityData.email);
+      expect(dbRecord!.name).toBe(entityData.name);
+      expect(dbRecord!.email).toBe(entityData.email);
     });
 
     it('should preserve provided id, createdAt, and updatedAt when creating entity', async () => {
@@ -263,11 +263,11 @@ describe('BasePostgresRepository Integration Tests', () => {
         result.createdAt.getTime(),
       );
 
-      const dbRecord = (await knexInstance('test_entities')
+      const dbRecord = await knexInstance<TestModel>('test_entities')
         .where({ id: result.id })
-        .first()) as TestModel;
-      expect(dbRecord.name).toBe('John Smith');
-      expect(dbRecord.email).toBe('john.smith@example.com');
+        .first();
+      expect(dbRecord!.name).toBe('John Smith');
+      expect(dbRecord!.email).toBe('john.smith@example.com');
     });
 
     it('should update updatedAt timestamp when updating entity', async () => {
@@ -298,16 +298,16 @@ describe('BasePostgresRepository Integration Tests', () => {
       });
       const createdEntity = await repository.create(entity);
 
-      let dbRecord = (await knexInstance('test_entities')
+      let dbRecord = await knexInstance<TestModel>('test_entities')
         .where({ id: createdEntity.id })
-        .first()) as TestModel | undefined;
+        .first();
       expect(dbRecord).toBeDefined();
 
       await repository.delete(createdEntity.id);
 
-      dbRecord = (await knexInstance('test_entities')
+      dbRecord = await knexInstance<TestModel>('test_entities')
         .where({ id: createdEntity.id })
-        .first()) as TestModel | undefined;
+        .first();
       expect(dbRecord).toBeUndefined();
     });
 
