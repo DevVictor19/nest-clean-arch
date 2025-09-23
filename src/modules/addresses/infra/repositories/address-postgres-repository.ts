@@ -61,7 +61,7 @@ export class AddressPostgresRepository
       state: data.state,
       zipCode: data.zip_code,
       country: data.country,
-      complement: data.complement,
+      complement: data.complement ?? undefined,
       clientId: data.client_id,
       createdAt: data.created_at,
       updatedAt: data.updated_at,
