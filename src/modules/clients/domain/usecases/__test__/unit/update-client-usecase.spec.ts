@@ -11,7 +11,7 @@ import { UpdateClientUseCase } from '../../update-client-usecase';
 
 describe('UpdateClientUseCase', () => {
   let clientRepository: any;
-  let addressRepository: any;
+  let addressService: any;
   let useCase: UpdateClientUseCase;
   let client: ClientEntity;
 
@@ -29,11 +29,11 @@ describe('UpdateClientUseCase', () => {
       findByPhone: jest.fn(),
       update: jest.fn(),
     };
-    addressRepository = {
+    addressService = {
       findByZipCodes: jest.fn(),
       deleteByClientId: jest.fn(),
     };
-    useCase = new UpdateClientUseCase(clientRepository, addressRepository);
+    useCase = new UpdateClientUseCase(clientRepository, addressService);
   });
 
   it('should throw NotFoundError if client does not exist', async () => {
@@ -105,9 +105,9 @@ describe('UpdateClientUseCase', () => {
 
   it('should update addresses if zip codes are not taken by another client', async () => {
     clientRepository.findById.mockResolvedValue(client);
-    addressRepository.findByZipCodes.mockResolvedValue([]);
+    addressService.findByZipCodes.mockResolvedValue([]);
     clientRepository.update.mockResolvedValue(client);
-    addressRepository.deleteByClientId.mockResolvedValue(undefined);
+    addressService.deleteByClientId.mockResolvedValue(undefined);
     const addresses = [
       {
         street: 'Main St',
@@ -122,15 +122,15 @@ describe('UpdateClientUseCase', () => {
     const input = { clientId: client.id, addresses };
     await useCase.execute(input);
     expect(clientRepository.update).toHaveBeenCalledWith(client);
-    expect(addressRepository.deleteByClientId).toHaveBeenCalledWith(client.id);
+    expect(addressService.deleteByClientId).toHaveBeenCalledWith(client.id);
   });
   it('should update multiple fields at once', async () => {
     clientRepository.findById.mockResolvedValue(client);
     clientRepository.findByEmail.mockResolvedValue(null);
     clientRepository.findByPhone.mockResolvedValue(null);
-    addressRepository.findByZipCodes.mockResolvedValue([]);
+    addressService.findByZipCodes.mockResolvedValue([]);
     clientRepository.update.mockResolvedValue(client);
-    addressRepository.deleteByClientId.mockResolvedValue(undefined);
+    addressService.deleteByClientId.mockResolvedValue(undefined);
     const addresses = [
       {
         street: 'Main St',
@@ -154,7 +154,7 @@ describe('UpdateClientUseCase', () => {
     expect(result.email).toBe('jane@example.com');
     expect(result.phone).toBe('9999999999');
     expect(clientRepository.update).toHaveBeenCalledWith(client);
-    expect(addressRepository.deleteByClientId).toHaveBeenCalledWith(client.id);
+    expect(addressService.deleteByClientId).toHaveBeenCalledWith(client.id);
   });
 
   it('should not update anything if no fields provided', async () => {
@@ -179,7 +179,7 @@ describe('UpdateClientUseCase', () => {
 
   it('should throw BadRequestError if any address zip code belongs to another client', async () => {
     clientRepository.findById.mockResolvedValue(client);
-    addressRepository.findByZipCodes.mockResolvedValue([
+    addressService.findByZipCodes.mockResolvedValue([
       { clientId: 'other-id', zipCode: '10001' },
     ]);
     const addresses = [

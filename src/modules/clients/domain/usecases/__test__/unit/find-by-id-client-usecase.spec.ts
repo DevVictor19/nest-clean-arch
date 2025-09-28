@@ -8,7 +8,7 @@ import { NotFoundError } from '@/core/domain/errors/base-errors';
 
 describe('FindByIdClientUseCase', () => {
   let clientRepository: any;
-  let addressRepository: any;
+  let addressService: any;
   let useCase: FindByIdClientUseCase;
   const input = { clientId: 'client-id-1' };
 
@@ -16,10 +16,10 @@ describe('FindByIdClientUseCase', () => {
     clientRepository = {
       findById: jest.fn(),
     };
-    addressRepository = {
+    addressService = {
       findByClientId: jest.fn(),
     };
-    useCase = new FindByIdClientUseCase(clientRepository, addressRepository);
+    useCase = new FindByIdClientUseCase(clientRepository, addressService);
   });
 
   it('should return client with addresses when found', async () => {
@@ -41,14 +41,12 @@ describe('FindByIdClientUseCase', () => {
       }),
     ];
     clientRepository.findById.mockResolvedValue(client);
-    addressRepository.findByClientId.mockResolvedValue(addresses);
+    addressService.findByClientId.mockResolvedValue(addresses);
     const result = await useCase.execute(input);
     expect(result).toBe(client);
     expect(result.addresses).toBe(addresses);
     expect(clientRepository.findById).toHaveBeenCalledWith(input.clientId);
-    expect(addressRepository.findByClientId).toHaveBeenCalledWith(
-      input.clientId,
-    );
+    expect(addressService.findByClientId).toHaveBeenCalledWith(input.clientId);
   });
 
   it('should throw NotFoundError when client not found', async () => {

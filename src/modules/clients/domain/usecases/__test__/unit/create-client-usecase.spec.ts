@@ -8,7 +8,7 @@ import { CreateClientUseCase } from '../../create-client-usecase';
 
 describe('CreateClientUseCase', () => {
   let clientRepository: any;
-  let addressRepository: any;
+  let addressService: any;
   let useCase: CreateClientUseCase;
 
   const input = {
@@ -33,16 +33,16 @@ describe('CreateClientUseCase', () => {
       findByPhone: jest.fn(),
       create: jest.fn(),
     };
-    addressRepository = {
+    addressService = {
       findByZipCodes: jest.fn(),
     };
-    useCase = new CreateClientUseCase(clientRepository, addressRepository);
+    useCase = new CreateClientUseCase(clientRepository, addressService);
   });
 
   it('should create a client when all checks pass', async () => {
     clientRepository.findByEmail.mockResolvedValue(null);
     clientRepository.findByPhone.mockResolvedValue(null);
-    addressRepository.findByZipCodes.mockResolvedValue([]);
+    addressService.findByZipCodes.mockResolvedValue([]);
     const createdClient = new ClientEntity({ ...input });
     clientRepository.create.mockResolvedValue(createdClient);
 
@@ -56,7 +56,7 @@ describe('CreateClientUseCase', () => {
   it('should throw BadRequestError if email already exists', async () => {
     clientRepository.findByEmail.mockResolvedValue({});
     clientRepository.findByPhone.mockResolvedValue(null);
-    addressRepository.findByZipCodes.mockResolvedValue([]);
+    addressService.findByZipCodes.mockResolvedValue([]);
 
     try {
       await useCase.execute(input);
@@ -71,7 +71,7 @@ describe('CreateClientUseCase', () => {
   it('should throw BadRequestError if phone already exists', async () => {
     clientRepository.findByEmail.mockResolvedValue(null);
     clientRepository.findByPhone.mockResolvedValue({});
-    addressRepository.findByZipCodes.mockResolvedValue([]);
+    addressService.findByZipCodes.mockResolvedValue([]);
 
     try {
       await useCase.execute(input);
@@ -86,7 +86,7 @@ describe('CreateClientUseCase', () => {
   it('should throw BadRequestError if address zip code already exists', async () => {
     clientRepository.findByEmail.mockResolvedValue(null);
     clientRepository.findByPhone.mockResolvedValue(null);
-    addressRepository.findByZipCodes.mockResolvedValue([{}]);
+    addressService.findByZipCodes.mockResolvedValue([{}]);
 
     try {
       await useCase.execute(input);
