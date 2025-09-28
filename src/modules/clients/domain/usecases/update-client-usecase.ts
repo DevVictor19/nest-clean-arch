@@ -6,7 +6,6 @@ import { BaseUseCase } from '@/core/domain/usecases/base-usecase';
 import { Injectable } from '@nestjs/common';
 import { ClientEntity } from '../entities';
 import { ClientRepository } from '../repositories';
-import { AddressEntity } from '@/modules/addresses/domain/entities';
 import { AddressService } from '@/modules/addresses/domain/services';
 
 interface Address {
@@ -100,18 +99,12 @@ export class UpdateClientUseCase implements BaseUseCase<Input, Output> {
 
       await this.addressService.deleteByClientId(client.id);
 
-      client.addresses = input.addresses.map(
-        (a) =>
-          new AddressEntity({
-            street: a.street,
-            city: a.city,
-            state: a.state,
-            zipCode: a.zipCode,
-            country: a.country,
-            complement: a.complement,
-            clientId: client.id,
-          }),
-      );
+      const newAddresses = input.addresses.map((address) => ({
+        ...address,
+        clientId: client.id,
+      }));
+
+      await this.addressService.createMany(newAddresses);
     }
 
     return this.clientRepository.update(client);

@@ -5,7 +5,6 @@ import {
   BadRequestError,
   NotFoundError,
 } from '@/core/domain/errors/base-errors';
-import { AddressEntity } from '@/modules/addresses/domain/entities';
 import { ClientEntity } from '../../../entities';
 import { UpdateClientUseCase } from '../../update-client-usecase';
 
@@ -32,6 +31,7 @@ describe('UpdateClientUseCase', () => {
     addressService = {
       findByZipCodes: jest.fn(),
       deleteByClientId: jest.fn(),
+      createMany: jest.fn(),
     };
     useCase = new UpdateClientUseCase(clientRepository, addressService);
   });
@@ -108,7 +108,22 @@ describe('UpdateClientUseCase', () => {
     addressService.findByZipCodes.mockResolvedValue([]);
     clientRepository.update.mockResolvedValue(client);
     addressService.deleteByClientId.mockResolvedValue(undefined);
+    addressService.createMany.mockResolvedValue(undefined);
     const addresses = [
+      {
+        street: 'Main St',
+        city: 'Metropolis',
+        state: 'NY',
+        zipCode: '10001',
+        country: 'USA',
+        complement: 'Apt 101',
+      },
+    ];
+    const input = { clientId: client.id, addresses };
+    await useCase.execute(input);
+    expect(clientRepository.update).toHaveBeenCalledWith(client);
+    expect(addressService.deleteByClientId).toHaveBeenCalledWith(client.id);
+    expect(addressService.createMany).toHaveBeenCalledWith([
       {
         street: 'Main St',
         city: 'Metropolis',
@@ -118,11 +133,7 @@ describe('UpdateClientUseCase', () => {
         complement: 'Apt 101',
         clientId: client.id,
       },
-    ];
-    const input = { clientId: client.id, addresses };
-    await useCase.execute(input);
-    expect(clientRepository.update).toHaveBeenCalledWith(client);
-    expect(addressService.deleteByClientId).toHaveBeenCalledWith(client.id);
+    ]);
   });
   it('should update multiple fields at once', async () => {
     clientRepository.findById.mockResolvedValue(client);
@@ -131,6 +142,7 @@ describe('UpdateClientUseCase', () => {
     addressService.findByZipCodes.mockResolvedValue([]);
     clientRepository.update.mockResolvedValue(client);
     addressService.deleteByClientId.mockResolvedValue(undefined);
+    addressService.createMany.mockResolvedValue(undefined);
     const addresses = [
       {
         street: 'Main St',
@@ -139,7 +151,6 @@ describe('UpdateClientUseCase', () => {
         zipCode: '10001',
         country: 'USA',
         complement: 'Apt 101',
-        clientId: client.id,
       },
     ];
     const input = {
@@ -155,6 +166,17 @@ describe('UpdateClientUseCase', () => {
     expect(result.phone).toBe('9999999999');
     expect(clientRepository.update).toHaveBeenCalledWith(client);
     expect(addressService.deleteByClientId).toHaveBeenCalledWith(client.id);
+    expect(addressService.createMany).toHaveBeenCalledWith([
+      {
+        street: 'Main St',
+        city: 'Metropolis',
+        state: 'NY',
+        zipCode: '10001',
+        country: 'USA',
+        complement: 'Apt 101',
+        clientId: client.id,
+      },
+    ]);
   });
 
   it('should not update anything if no fields provided', async () => {
@@ -183,14 +205,13 @@ describe('UpdateClientUseCase', () => {
       { clientId: 'other-id', zipCode: '10001' },
     ]);
     const addresses = [
-      new AddressEntity({
+      {
         street: 'Main St',
         city: 'Metropolis',
         state: 'NY',
         zipCode: '10001',
         country: 'USA',
-        clientId: client.id,
-      }),
+      },
     ];
     const input = { clientId: client.id, addresses };
     try {

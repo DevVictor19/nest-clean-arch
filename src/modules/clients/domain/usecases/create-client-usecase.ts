@@ -1,6 +1,5 @@
 import { BadRequestError } from '@/core/domain/errors/base-errors';
 import { BaseUseCase } from '@/core/domain/usecases/base-usecase';
-import { AddressEntity } from '@/modules/addresses/domain/entities';
 import { Injectable } from '@nestjs/common';
 import { ClientEntity } from '../entities';
 import { ClientRepository } from '../repositories';
@@ -74,19 +73,15 @@ export class CreateClientUseCase implements BaseUseCase<Input, Output> {
       phone: input.phone,
     });
 
-    client.addresses = input.addresses.map(
-      (a) =>
-        new AddressEntity({
-          street: a.street,
-          city: a.city,
-          state: a.state,
-          zipCode: a.zipCode,
-          country: a.country,
-          complement: a.complement,
-          clientId: client.id,
-        }),
-    );
+    await this.clientRepository.create(client);
 
-    return this.clientRepository.create(client);
+    const addresses = input.addresses.map((address) => ({
+      ...address,
+      clientId: client.id,
+    }));
+
+    await this.addressService.createMany(addresses);
+
+    return client;
   }
 }

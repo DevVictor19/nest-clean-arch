@@ -2,7 +2,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 import { BadRequestError } from '@/core/domain/errors/base-errors';
-import { AddressEntity } from '@/modules/addresses/domain/entities';
 import { ClientEntity } from '../../../entities';
 import { CreateClientUseCase } from '../../create-client-usecase';
 
@@ -16,14 +15,13 @@ describe('CreateClientUseCase', () => {
     email: 'john@example.com',
     phone: '1234567890',
     addresses: [
-      new AddressEntity({
+      {
         street: 'Main St',
         city: 'Metropolis',
         state: 'NY',
         zipCode: '10001',
         country: 'USA',
-        clientId: 'client-id-1',
-      }),
+      },
     ],
   };
 
@@ -35,6 +33,7 @@ describe('CreateClientUseCase', () => {
     };
     addressService = {
       findByZipCodes: jest.fn(),
+      createMany: jest.fn(),
     };
     useCase = new CreateClientUseCase(clientRepository, addressService);
   });
@@ -43,14 +42,32 @@ describe('CreateClientUseCase', () => {
     clientRepository.findByEmail.mockResolvedValue(null);
     clientRepository.findByPhone.mockResolvedValue(null);
     addressService.findByZipCodes.mockResolvedValue([]);
-    const createdClient = new ClientEntity({ ...input });
+    const createdClient = new ClientEntity({
+      name: input.name,
+      email: input.email,
+      phone: input.phone,
+    });
     clientRepository.create.mockResolvedValue(createdClient);
+    addressService.createMany.mockResolvedValue(undefined);
 
     const result = await useCase.execute(input);
-    expect(result).toBe(createdClient);
+    expect(result).toBeInstanceOf(ClientEntity);
+    expect(result.name).toBe(input.name);
+    expect(result.email).toBe(input.email);
+    expect(result.phone).toBe(input.phone);
     expect(clientRepository.create).toHaveBeenCalledWith(
       expect.any(ClientEntity),
     );
+    expect(addressService.createMany).toHaveBeenCalledWith([
+      {
+        street: 'Main St',
+        city: 'Metropolis',
+        state: 'NY',
+        zipCode: '10001',
+        country: 'USA',
+        clientId: result.id,
+      },
+    ]);
   });
 
   it('should throw BadRequestError if email already exists', async () => {
