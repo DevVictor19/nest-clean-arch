@@ -3,11 +3,11 @@ import {
   NotFoundError,
 } from '@/core/domain/errors/base-errors';
 import { BaseUseCase } from '@/core/domain/usecases/base-usecase';
-import { AddressRepository } from '@/modules/addresses/domain/repositories';
 import { Injectable } from '@nestjs/common';
 import { ClientEntity } from '../entities';
 import { ClientRepository } from '../repositories';
 import { AddressEntity } from '@/modules/addresses/domain/entities';
+import { AddressService } from '@/modules/addresses/domain/services';
 
 interface Address {
   street: string;
@@ -38,7 +38,7 @@ enum UpdateClientError {
 export class UpdateClientUseCase implements BaseUseCase<Input, Output> {
   constructor(
     private readonly clientRepository: ClientRepository,
-    private readonly addressRepository: AddressRepository,
+    private readonly addressService: AddressService,
   ) {}
 
   async execute(input: Input): Promise<ClientEntity> {
@@ -87,7 +87,7 @@ export class UpdateClientUseCase implements BaseUseCase<Input, Output> {
 
     if (input.addresses !== undefined && input.addresses.length > 0) {
       const zipCodes = input.addresses.map((address) => address.zipCode);
-      const addresses = await this.addressRepository.findByZipCodes(zipCodes);
+      const addresses = await this.addressService.findByZipCodes(zipCodes);
       const isFromAnotherClient = addresses.some(
         (a) => a.clientId !== client.id,
       );
@@ -98,7 +98,7 @@ export class UpdateClientUseCase implements BaseUseCase<Input, Output> {
         );
       }
 
-      await this.addressRepository.deleteByClientId(client.id);
+      await this.addressService.deleteByClientId(client.id);
 
       client.addresses = input.addresses.map(
         (a) =>

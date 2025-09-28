@@ -1,10 +1,10 @@
 import { BadRequestError } from '@/core/domain/errors/base-errors';
 import { BaseUseCase } from '@/core/domain/usecases/base-usecase';
 import { AddressEntity } from '@/modules/addresses/domain/entities';
-import { AddressRepository } from '@/modules/addresses/domain/repositories';
 import { Injectable } from '@nestjs/common';
 import { ClientEntity } from '../entities';
 import { ClientRepository } from '../repositories';
+import { AddressService } from '@/modules/addresses/domain/services';
 
 interface Address {
   street: string;
@@ -34,7 +34,7 @@ enum CreateClientError {
 export class CreateClientUseCase implements BaseUseCase<Input, Output> {
   constructor(
     private readonly clientRepository: ClientRepository,
-    private readonly addressRepository: AddressRepository,
+    private readonly addressService: AddressService,
   ) {}
 
   async execute(input: Input): Promise<Output> {
@@ -42,7 +42,7 @@ export class CreateClientUseCase implements BaseUseCase<Input, Output> {
       await Promise.all([
         this.clientRepository.findByEmail(input.email),
         this.clientRepository.findByPhone(input.phone),
-        this.addressRepository.findByZipCodes(
+        this.addressService.findByZipCodes(
           input.addresses.map((address) => address.zipCode),
         ),
       ]);

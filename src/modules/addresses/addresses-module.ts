@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { AddressRepository } from './domain/repositories';
 import { AddressPostgresRepository } from './infra/repositories';
+import { AddressService } from './domain/services';
+import { AddressServiceImpl } from './infra/services';
 
 @Module({
   providers: [
@@ -8,7 +10,11 @@ import { AddressPostgresRepository } from './infra/repositories';
       provide: AddressRepository,
       useClass: AddressPostgresRepository,
     },
+    {
+      provide: AddressService,
+      useClass: AddressServiceImpl,
+    },
   ],
-  exports: [AddressRepository],
+  exports: [AddressService],
 })
 export class AddressesModule {}

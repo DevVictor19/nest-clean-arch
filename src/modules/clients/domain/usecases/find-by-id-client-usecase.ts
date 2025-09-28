@@ -1,9 +1,9 @@
 import { BaseUseCase } from '@/core/domain/usecases/base-usecase';
-import { AddressRepository } from '@/modules/addresses/domain/repositories';
 import { Injectable } from '@nestjs/common';
 import { ClientEntity } from '../entities';
 import { ClientRepository } from '../repositories';
 import { NotFoundError } from '@/core/domain/errors/base-errors';
+import { AddressService } from '@/modules/addresses/domain/services';
 
 interface Input {
   clientId: string;
@@ -15,7 +15,7 @@ type Output = ClientEntity;
 export class FindByIdClientUseCase implements BaseUseCase<Input, Output> {
   constructor(
     private readonly clientRepository: ClientRepository,
-    private readonly addressRepository: AddressRepository,
+    private readonly addressService: AddressService,
   ) {}
 
   async execute(input: Input): Promise<Output> {
@@ -23,7 +23,7 @@ export class FindByIdClientUseCase implements BaseUseCase<Input, Output> {
     if (!client) {
       throw new NotFoundError('Client not found');
     }
-    const addresses = await this.addressRepository.findByClientId(client.id);
+    const addresses = await this.addressService.findByClientId(client.id);
     client.addresses = addresses;
 
     return client;
