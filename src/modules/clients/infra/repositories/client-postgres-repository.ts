@@ -7,7 +7,6 @@ import {
   type ConnectionManager,
 } from '@/core/infra/database/database-module';
 import { ClientModel } from '../models';
-import { AddressModel } from '@/modules/addresses/infra/models';
 
 @Injectable()
 export class ClientPostgresRepository
@@ -19,82 +18,6 @@ export class ClientPostgresRepository
     manager: ConnectionManager,
   ) {
     super(manager, 'clients');
-  }
-
-  async create(entity: ClientEntity): Promise<ClientEntity> {
-    if (entity.addresses && entity.addresses.length > 0) {
-      const result = await this.manager.transaction(async (trx) => {
-        const [clientRow] = await trx<ClientModel>(this.tableName)
-          .insert(this.toModel(entity))
-          .returning('*');
-
-        const addresses: AddressModel[] = entity.addresses!.map((address) => ({
-          id: address.id,
-          street: address.street,
-          city: address.city,
-          state: address.state,
-          zip_code: address.zipCode,
-          country: address.country,
-          complement: address.complement,
-          client_id: entity.id,
-          created_at: address.createdAt,
-          updated_at: address.updatedAt,
-        }));
-        await trx<AddressModel>('addresses').insert(addresses);
-
-        return clientRow;
-      });
-      return this.toEntity(result);
-    } else {
-      const [clientRow] = await this.manager<ClientModel>(this.tableName)
-        .insert(this.toModel(entity))
-        .returning('*');
-      return this.toEntity(clientRow);
-    }
-  }
-
-  async update(entity: ClientEntity): Promise<ClientEntity> {
-    if (entity.addresses && entity.addresses.length > 0) {
-      const result = await this.manager.transaction(async (trx) => {
-        const [clientRow] = await trx<ClientModel>(this.tableName)
-          .where({ id: entity.id })
-          .update({
-            name: entity.name,
-            email: entity.email,
-            phone: entity.phone,
-            updated_at: new Date(),
-          })
-          .returning('*');
-
-        const addresses: AddressModel[] = entity.addresses!.map((address) => ({
-          id: address.id,
-          street: address.street,
-          city: address.city,
-          state: address.state,
-          zip_code: address.zipCode,
-          country: address.country,
-          complement: address.complement,
-          client_id: clientRow.id,
-          created_at: address.createdAt,
-          updated_at: address.updatedAt,
-        }));
-        await trx<AddressModel>('addresses').insert(addresses);
-
-        return clientRow;
-      });
-      return this.toEntity(result);
-    } else {
-      const [clientRow] = await this.manager<ClientModel>(this.tableName)
-        .where({ id: entity.id })
-        .update({
-          name: entity.name,
-          email: entity.email,
-          phone: entity.phone,
-          updated_at: new Date(),
-        })
-        .returning('*');
-      return this.toEntity(clientRow);
-    }
   }
 
   async findByEmail(email: string): Promise<ClientEntity | null> {

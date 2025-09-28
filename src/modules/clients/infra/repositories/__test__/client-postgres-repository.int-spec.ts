@@ -5,9 +5,7 @@ import {
 import { knex, Knex } from 'knex';
 import { ClientPostgresRepository } from '../client-postgres-repository';
 import { ClientEntity } from '../../../domain/entities';
-import { AddressEntity } from '@/modules/addresses/domain/entities';
 import { ClientModel } from '../../models';
-import { AddressModel } from '@/modules/addresses/infra/models';
 import {
   FilterOperator,
   FindPaginatedParams,
@@ -51,30 +49,6 @@ describe('ClientPostgresRepository Integration Tests', () => {
         .defaultTo(knexInstance.fn.now());
     });
 
-    await knexInstance.schema.createTable('addresses', (table) => {
-      table.uuid('id').primary();
-      table.string('street').notNullable();
-      table.string('city').notNullable();
-      table.string('state').notNullable();
-      table.string('zip_code').unique().notNullable();
-      table.string('country').notNullable();
-      table.string('complement');
-      table
-        .uuid('client_id')
-        .notNullable()
-        .references('id')
-        .inTable('clients')
-        .onDelete('CASCADE');
-      table
-        .timestamp('created_at')
-        .notNullable()
-        .defaultTo(knexInstance.fn.now());
-      table
-        .timestamp('updated_at')
-        .notNullable()
-        .defaultTo(knexInstance.fn.now());
-    });
-
     repository = new ClientPostgresRepository(knexInstance);
   }, 30000);
 
@@ -88,7 +62,6 @@ describe('ClientPostgresRepository Integration Tests', () => {
   });
 
   beforeEach(async () => {
-    await knexInstance('addresses').del();
     await knexInstance('clients').del();
   });
 
@@ -151,85 +124,6 @@ describe('ClientPostgresRepository Integration Tests', () => {
       expect(dbRecord!.phone).toBe(clientData.phone);
     });
 
-    it('should create a client with addresses using transaction', async () => {
-      const address = new AddressEntity({
-        street: '123 Main St',
-        city: 'New York',
-        state: 'NY',
-        zipCode: '10001',
-        country: 'USA',
-        complement: 'Apt 4B',
-        clientId: 'temp-client-id',
-      });
-
-      const clientData = {
-        name: 'John Doe',
-        email: 'john.doe@example.com',
-        phone: '+1234567890',
-        addresses: [address],
-      };
-      const client = new ClientEntity(clientData);
-
-      const result = await repository.create(client);
-
-      expect(result).toBeInstanceOf(ClientEntity);
-      expect(result.id).toBeDefined();
-      expect(result.name).toBe(clientData.name);
-
-      const dbClient = await knexInstance<ClientModel>('clients')
-        .where({ id: result.id })
-        .first();
-      expect(dbClient).toBeDefined();
-
-      const dbAddresses = await knexInstance<AddressModel>('addresses')
-        .where({ client_id: result.id })
-        .select('*');
-      expect(dbAddresses).toHaveLength(1);
-      expect(dbAddresses[0].street).toBe('123 Main St');
-      expect(dbAddresses[0].city).toBe('New York');
-      expect(dbAddresses[0].zip_code).toBe('10001');
-    });
-
-    it('should create a client with multiple addresses', async () => {
-      const addresses = [
-        new AddressEntity({
-          street: '123 Main St',
-          city: 'New York',
-          state: 'NY',
-          zipCode: '10001',
-          country: 'USA',
-          clientId: 'temp-client-id-1',
-        }),
-        new AddressEntity({
-          street: '456 Oak Ave',
-          city: 'Los Angeles',
-          state: 'CA',
-          zipCode: '90210',
-          country: 'USA',
-          clientId: 'temp-client-id-2',
-        }),
-      ];
-
-      const clientData = {
-        name: 'John Doe',
-        email: 'john.doe@example.com',
-        phone: '+1234567890',
-        addresses: addresses,
-      };
-      const client = new ClientEntity(clientData);
-
-      const result = await repository.create(client);
-
-      expect(result).toBeInstanceOf(ClientEntity);
-
-      const dbAddresses = await knexInstance<AddressModel>('addresses')
-        .where({ client_id: result.id })
-        .select('*');
-      expect(dbAddresses).toHaveLength(2);
-      expect(dbAddresses.map((addr) => addr.city)).toContain('New York');
-      expect(dbAddresses.map((addr) => addr.city)).toContain('Los Angeles');
-    });
-
     it('should handle unique constraint violations', async () => {
       const client1 = new ClientEntity({
         name: 'John Doe',
@@ -278,39 +172,6 @@ describe('ClientPostgresRepository Integration Tests', () => {
       expect(dbRecord!.name).toBe('John Smith');
       expect(dbRecord!.email).toBe('john.smith@example.com');
       expect(dbRecord!.phone).toBe('+9876543210');
-    });
-
-    it('should update a client with new addresses using transaction', async () => {
-      const client = new ClientEntity({
-        name: 'John Doe',
-        email: 'john.doe@example.com',
-        phone: '+1234567890',
-      });
-      const createdClient = await repository.create(client);
-
-      const newAddress = new AddressEntity({
-        street: '789 New St',
-        city: 'Chicago',
-        state: 'IL',
-        zipCode: '60601',
-        country: 'USA',
-        clientId: 'temp-client-id-3',
-      });
-
-      createdClient.name = 'John Updated';
-      createdClient.addresses = [newAddress];
-
-      const result = await repository.update(createdClient);
-
-      expect(result).toBeInstanceOf(ClientEntity);
-      expect(result.name).toBe('John Updated');
-
-      const dbAddresses = await knexInstance<AddressModel>('addresses')
-        .where({ client_id: result.id })
-        .select('*');
-      expect(dbAddresses).toHaveLength(1);
-      expect(dbAddresses[0].street).toBe('789 New St');
-      expect(dbAddresses[0].city).toBe('Chicago');
     });
 
     it('should update updatedAt timestamp when updating client', async () => {
@@ -467,37 +328,6 @@ describe('ClientPostgresRepository Integration Tests', () => {
         .where({ id: createdClient.id })
         .first();
       expect(dbRecord).toBeUndefined();
-    });
-
-    it('should cascade delete addresses when client is deleted', async () => {
-      const address = new AddressEntity({
-        street: '123 Main St',
-        city: 'New York',
-        state: 'NY',
-        zipCode: '10001',
-        country: 'USA',
-        clientId: 'temp-client-id-4',
-      });
-
-      const client = new ClientEntity({
-        name: 'John Doe',
-        email: 'john.doe@example.com',
-        phone: '+1234567890',
-        addresses: [address],
-      });
-      const createdClient = await repository.create(client);
-
-      let dbAddresses = await knexInstance<AddressModel>('addresses')
-        .where({ client_id: createdClient.id })
-        .select('*');
-      expect(dbAddresses).toHaveLength(1);
-
-      await repository.delete(createdClient.id);
-
-      dbAddresses = await knexInstance<AddressModel>('addresses')
-        .where({ client_id: createdClient.id })
-        .select('*');
-      expect(dbAddresses).toHaveLength(0);
     });
   });
 
