@@ -1,15 +1,17 @@
-import {
-  PostgreSqlContainer,
-  StartedPostgreSqlContainer,
-} from '@testcontainers/postgresql';
-import { knex, Knex } from 'knex';
+import { StartedPostgreSqlContainer } from '@testcontainers/postgresql';
+import { Knex } from 'knex';
 import { ClientPostgresRepository } from '../client-postgres-repository';
 import { ClientEntity } from '../../../domain/entities';
 import { ClientModel } from '../../models';
 import {
   FilterOperator,
   FindPaginatedParams,
-} from '@/core/domain/repositories/base-paginated-repository';
+} from '@/core/domain/repositories';
+import {
+  cleanupDatabaseContainer,
+  cleanupTables,
+  initDatabaseContainer,
+} from '@/core/infra/tests';
 
 describe('ClientPostgresRepository Integration Tests', () => {
   let container: StartedPostgreSqlContainer;
@@ -17,52 +19,19 @@ describe('ClientPostgresRepository Integration Tests', () => {
   let repository: ClientPostgresRepository;
 
   beforeAll(async () => {
-    container = await new PostgreSqlContainer('postgres:17.6-alpine')
-      .withDatabase('test_db')
-      .withUsername('test_user')
-      .withPassword('test_password')
-      .start();
-
-    knexInstance = knex({
-      client: 'pg',
-      connection: {
-        host: container.getHost(),
-        port: container.getPort(),
-        user: container.getUsername(),
-        password: container.getPassword(),
-        database: container.getDatabase(),
-      },
-    });
-
-    await knexInstance.schema.createTable('clients', (table) => {
-      table.uuid('id').primary();
-      table.string('name').notNullable();
-      table.string('email').unique().notNullable();
-      table.string('phone').unique().notNullable();
-      table
-        .timestamp('created_at')
-        .notNullable()
-        .defaultTo(knexInstance.fn.now());
-      table
-        .timestamp('updated_at')
-        .notNullable()
-        .defaultTo(knexInstance.fn.now());
-    });
+    const instance = await initDatabaseContainer();
+    container = instance.container;
+    knexInstance = instance.knexInstance;
 
     repository = new ClientPostgresRepository(knexInstance);
   }, 30000);
 
   afterAll(async () => {
-    if (knexInstance) {
-      await knexInstance.destroy();
-    }
-    if (container) {
-      await container.stop();
-    }
+    await cleanupDatabaseContainer(container, knexInstance);
   });
 
   beforeEach(async () => {
-    await knexInstance('clients').del();
+    await cleanupTables(knexInstance);
   });
 
   const createTestClients = async () => {

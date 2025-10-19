@@ -1,15 +1,17 @@
-import {
-  PostgreSqlContainer,
-  StartedPostgreSqlContainer,
-} from '@testcontainers/postgresql';
-import { knex, Knex } from 'knex';
+import { StartedPostgreSqlContainer } from '@testcontainers/postgresql';
+import { Knex } from 'knex';
 import { AddressPostgresRepository } from '../../address-postgres-repository';
 import { AddressEntity } from '../../../../domain/entities';
 import { AddressModel } from '../../../models';
 import {
   FilterOperator,
   FindPaginatedParams,
-} from '@/core/domain/repositories/base-paginated-repository';
+} from '@/core/domain/repositories';
+import {
+  cleanupDatabaseContainer,
+  cleanupTables,
+  initDatabaseContainer,
+} from '@/core/infra/tests';
 
 describe('AddressPostgresRepository Integration Tests', () => {
   let container: StartedPostgreSqlContainer;
@@ -17,77 +19,19 @@ describe('AddressPostgresRepository Integration Tests', () => {
   let repository: AddressPostgresRepository;
 
   beforeAll(async () => {
-    container = await new PostgreSqlContainer('postgres:17.6-alpine')
-      .withDatabase('test_db')
-      .withUsername('test_user')
-      .withPassword('test_password')
-      .start();
-
-    knexInstance = knex({
-      client: 'pg',
-      connection: {
-        host: container.getHost(),
-        port: container.getPort(),
-        user: container.getUsername(),
-        password: container.getPassword(),
-        database: container.getDatabase(),
-      },
-    });
-
-    await knexInstance.schema.createTable('clients', (table) => {
-      table.uuid('id').primary();
-      table.string('name').notNullable();
-      table.string('email').unique().notNullable();
-      table.string('phone').unique().notNullable();
-      table
-        .timestamp('created_at')
-        .notNullable()
-        .defaultTo(knexInstance.fn.now());
-      table
-        .timestamp('updated_at')
-        .notNullable()
-        .defaultTo(knexInstance.fn.now());
-    });
-
-    await knexInstance.schema.createTable('addresses', (table) => {
-      table.uuid('id').primary();
-      table.string('street').notNullable();
-      table.string('city').notNullable();
-      table.string('state').notNullable();
-      table.string('zip_code').notNullable();
-      table.string('country').notNullable();
-      table.string('complement');
-      table
-        .uuid('client_id')
-        .notNullable()
-        .references('id')
-        .inTable('clients')
-        .onDelete('CASCADE');
-      table
-        .timestamp('created_at')
-        .notNullable()
-        .defaultTo(knexInstance.fn.now());
-      table
-        .timestamp('updated_at')
-        .notNullable()
-        .defaultTo(knexInstance.fn.now());
-    });
+    const instance = await initDatabaseContainer();
+    container = instance.container;
+    knexInstance = instance.knexInstance;
 
     repository = new AddressPostgresRepository(knexInstance);
   }, 30000);
 
   afterAll(async () => {
-    if (knexInstance) {
-      await knexInstance.destroy();
-    }
-    if (container) {
-      await container.stop();
-    }
+    await cleanupDatabaseContainer(container, knexInstance);
   });
 
   beforeEach(async () => {
-    await knexInstance('addresses').del();
-    await knexInstance('clients').del();
+    await cleanupTables(knexInstance);
   });
 
   const createTestClient = async (): Promise<string> => {
