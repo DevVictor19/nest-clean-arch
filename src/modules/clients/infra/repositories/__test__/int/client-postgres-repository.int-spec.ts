@@ -1,8 +1,8 @@
 import { StartedPostgreSqlContainer } from '@testcontainers/postgresql';
 import { Knex } from 'knex';
-import { ClientPostgresRepository } from '../client-postgres-repository';
-import { ClientEntity } from '../../../domain/entities';
-import { ClientModel } from '../../models';
+import { ClientPostgresRepository } from '../../client-postgres-repository';
+import { ClientEntity } from '../../../../domain/entities';
+import { ClientModel } from '../../../models';
 import {
   FilterOperator,
   FindPaginatedParams,
