@@ -1,20 +1,21 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
 import {
   BadRequestError,
   NotFoundError,
 } from '@/core/domain/errors/base-errors';
 import { ClientEntity } from '../../../entities';
 import { UpdateClientUseCase } from '../../update-client-usecase';
+import { ClientRepository } from '../../../repositories';
+import { AddressService } from '@/modules/addresses/domain/services';
+import { Test } from '@nestjs/testing';
 
 describe('UpdateClientUseCase', () => {
-  let clientRepository: any;
-  let addressService: any;
+  let clientRepository: ClientRepository;
+  let addressService: AddressService;
   let useCase: UpdateClientUseCase;
   let client: ClientEntity;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     client = new ClientEntity({
       id: 'client-id-1',
       name: 'John Doe',
@@ -22,22 +23,42 @@ describe('UpdateClientUseCase', () => {
       phone: '1234567890',
       addresses: [],
     });
-    clientRepository = {
+
+    const clientRepositoryMock = {
       findById: jest.fn(),
       findByEmail: jest.fn(),
       findByPhone: jest.fn(),
       update: jest.fn(),
     };
-    addressService = {
+
+    const addressServiceMock = {
       findByZipCodes: jest.fn(),
       deleteByClientId: jest.fn(),
       createMany: jest.fn(),
     };
-    useCase = new UpdateClientUseCase(clientRepository, addressService);
+
+    const moduleRef = await Test.createTestingModule({
+      providers: [
+        UpdateClientUseCase,
+        {
+          provide: ClientRepository,
+          useValue: clientRepositoryMock,
+        },
+        {
+          provide: AddressService,
+          useValue: addressServiceMock,
+        },
+      ],
+    }).compile();
+
+    clientRepository = moduleRef.get(ClientRepository);
+    addressService = moduleRef.get(AddressService);
+    useCase = moduleRef.get(UpdateClientUseCase);
   });
 
   it('should throw NotFoundError if client does not exist', async () => {
-    clientRepository.findById.mockResolvedValue(null);
+    jest.spyOn(clientRepository, 'findById').mockResolvedValue(null);
+
     await expect(useCase.execute({ clientId: 'not-exist' })).rejects.toThrow(
       NotFoundError,
     );
@@ -47,28 +68,36 @@ describe('UpdateClientUseCase', () => {
   });
 
   it('should update name if provided', async () => {
-    clientRepository.findById.mockResolvedValue(client);
-    clientRepository.update.mockResolvedValue(client);
+    jest.spyOn(clientRepository, 'findById').mockResolvedValue(client);
+    jest.spyOn(clientRepository, 'update').mockResolvedValue(client);
+
     const input = { clientId: client.id, name: 'Jane Doe' };
     const result = await useCase.execute(input);
+
     expect(result.name).toBe('Jane Doe');
     expect(clientRepository.update).toHaveBeenCalledWith(client);
   });
 
   it('should update email if not taken', async () => {
-    clientRepository.findById.mockResolvedValue(client);
-    clientRepository.findByEmail.mockResolvedValue(null);
-    clientRepository.update.mockResolvedValue(client);
+    jest.spyOn(clientRepository, 'findById').mockResolvedValue(client);
+    jest.spyOn(clientRepository, 'findByEmail').mockResolvedValue(null);
+    jest.spyOn(clientRepository, 'update').mockResolvedValue(client);
+
     const input = { clientId: client.id, email: 'jane@example.com' };
     const result = await useCase.execute(input);
+
     expect(result.email).toBe('jane@example.com');
     expect(clientRepository.update).toHaveBeenCalledWith(client);
   });
 
   it('should throw BadRequestError if email is taken by another client', async () => {
-    clientRepository.findById.mockResolvedValue(client);
-    clientRepository.findByEmail.mockResolvedValue({ id: 'other-id' });
+    jest.spyOn(clientRepository, 'findById').mockResolvedValue(client);
+    jest
+      .spyOn(clientRepository, 'findByEmail')
+      .mockResolvedValue({ id: 'other-id' } as ClientEntity);
+
     const input = { clientId: client.id, email: 'taken@example.com' };
+
     try {
       await useCase.execute(input);
       fail('Should have thrown BadRequestError');
@@ -80,19 +109,25 @@ describe('UpdateClientUseCase', () => {
   });
 
   it('should update phone if not taken', async () => {
-    clientRepository.findById.mockResolvedValue(client);
-    clientRepository.findByPhone.mockResolvedValue(null);
-    clientRepository.update.mockResolvedValue(client);
+    jest.spyOn(clientRepository, 'findById').mockResolvedValue(client);
+    jest.spyOn(clientRepository, 'findByPhone').mockResolvedValue(null);
+    jest.spyOn(clientRepository, 'update').mockResolvedValue(client);
+
     const input = { clientId: client.id, phone: '9999999999' };
     const result = await useCase.execute(input);
+
     expect(result.phone).toBe('9999999999');
     expect(clientRepository.update).toHaveBeenCalledWith(client);
   });
 
   it('should throw BadRequestError if phone is taken by another client', async () => {
-    clientRepository.findById.mockResolvedValue(client);
-    clientRepository.findByPhone.mockResolvedValue({ id: 'other-id' });
+    jest.spyOn(clientRepository, 'findById').mockResolvedValue(client);
+    jest
+      .spyOn(clientRepository, 'findByPhone')
+      .mockResolvedValue({ id: 'other-id' } as ClientEntity);
+
     const input = { clientId: client.id, phone: '8888888888' };
+
     try {
       await useCase.execute(input);
       fail('Should have thrown BadRequestError');
@@ -104,11 +139,12 @@ describe('UpdateClientUseCase', () => {
   });
 
   it('should update addresses if zip codes are not taken by another client', async () => {
-    clientRepository.findById.mockResolvedValue(client);
-    addressService.findByZipCodes.mockResolvedValue([]);
-    clientRepository.update.mockResolvedValue(client);
-    addressService.deleteByClientId.mockResolvedValue(undefined);
-    addressService.createMany.mockResolvedValue(undefined);
+    jest.spyOn(clientRepository, 'findById').mockResolvedValue(client);
+    jest.spyOn(addressService, 'findByZipCodes').mockResolvedValue([]);
+    jest.spyOn(clientRepository, 'update').mockResolvedValue(client);
+    jest.spyOn(addressService, 'deleteByClientId').mockResolvedValue(undefined);
+    jest.spyOn(addressService, 'createMany').mockResolvedValue(undefined);
+
     const addresses = [
       {
         street: 'Main St',
@@ -120,7 +156,9 @@ describe('UpdateClientUseCase', () => {
       },
     ];
     const input = { clientId: client.id, addresses };
+
     await useCase.execute(input);
+
     expect(clientRepository.update).toHaveBeenCalledWith(client);
     expect(addressService.deleteByClientId).toHaveBeenCalledWith(client.id);
     expect(addressService.createMany).toHaveBeenCalledWith([
@@ -135,14 +173,16 @@ describe('UpdateClientUseCase', () => {
       },
     ]);
   });
+
   it('should update multiple fields at once', async () => {
-    clientRepository.findById.mockResolvedValue(client);
-    clientRepository.findByEmail.mockResolvedValue(null);
-    clientRepository.findByPhone.mockResolvedValue(null);
-    addressService.findByZipCodes.mockResolvedValue([]);
-    clientRepository.update.mockResolvedValue(client);
-    addressService.deleteByClientId.mockResolvedValue(undefined);
-    addressService.createMany.mockResolvedValue(undefined);
+    jest.spyOn(clientRepository, 'findById').mockResolvedValue(client);
+    jest.spyOn(clientRepository, 'findByEmail').mockResolvedValue(null);
+    jest.spyOn(clientRepository, 'findByPhone').mockResolvedValue(null);
+    jest.spyOn(addressService, 'findByZipCodes').mockResolvedValue([]);
+    jest.spyOn(clientRepository, 'update').mockResolvedValue(client);
+    jest.spyOn(addressService, 'deleteByClientId').mockResolvedValue(undefined);
+    jest.spyOn(addressService, 'createMany').mockResolvedValue(undefined);
+
     const addresses = [
       {
         street: 'Main St',
@@ -160,7 +200,9 @@ describe('UpdateClientUseCase', () => {
       phone: '9999999999',
       addresses,
     };
+
     const result = await useCase.execute(input);
+
     expect(result.name).toBe('Jane Doe');
     expect(result.email).toBe('jane@example.com');
     expect(result.phone).toBe('9999999999');
@@ -180,19 +222,23 @@ describe('UpdateClientUseCase', () => {
   });
 
   it('should not update anything if no fields provided', async () => {
-    clientRepository.findById.mockResolvedValue(client);
-    clientRepository.update.mockResolvedValue(client);
+    jest.spyOn(clientRepository, 'findById').mockResolvedValue(client);
+    jest.spyOn(clientRepository, 'update').mockResolvedValue(client);
+
     const input = { clientId: client.id };
     const result = await useCase.execute(input);
+
     expect(result).toEqual(client);
     expect(clientRepository.update).toHaveBeenCalledWith(client);
   });
 
   it('should update only one field if only one provided', async () => {
-    clientRepository.findById.mockResolvedValue(client);
-    clientRepository.update.mockResolvedValue(client);
+    jest.spyOn(clientRepository, 'findById').mockResolvedValue(client);
+    jest.spyOn(clientRepository, 'update').mockResolvedValue(client);
+
     const input = { clientId: client.id, name: 'Only Name' };
     const result = await useCase.execute(input);
+
     expect(result.name).toBe('Only Name');
     expect(result.email).toBe('john@example.com');
     expect(result.phone).toBe('1234567890');
@@ -200,10 +246,11 @@ describe('UpdateClientUseCase', () => {
   });
 
   it('should throw BadRequestError if any address zip code belongs to another client', async () => {
-    clientRepository.findById.mockResolvedValue(client);
-    addressService.findByZipCodes.mockResolvedValue([
-      { clientId: 'other-id', zipCode: '10001' },
-    ]);
+    jest.spyOn(clientRepository, 'findById').mockResolvedValue(client);
+    jest
+      .spyOn(addressService, 'findByZipCodes')
+      .mockResolvedValue([{ clientId: 'other-id', zipCode: '10001' } as any]);
+
     const addresses = [
       {
         street: 'Main St',
@@ -214,6 +261,7 @@ describe('UpdateClientUseCase', () => {
       },
     ];
     const input = { clientId: client.id, addresses };
+
     try {
       await useCase.execute(input);
       fail('Should have thrown BadRequestError');

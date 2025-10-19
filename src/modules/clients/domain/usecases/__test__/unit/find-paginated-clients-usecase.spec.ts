@@ -1,6 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
 import {
   FindPaginatedParams,
   FilterOperator,
@@ -8,21 +5,36 @@ import {
 } from '@/core/domain/repositories/base-paginated-repository';
 import { ClientEntity } from '../../../entities';
 import { FindPaginatedClientsUseCase } from '../../find-paginated-clients-usecase';
+import { ClientRepository } from '../../../repositories';
+import { Test } from '@nestjs/testing';
 
 describe('FindPaginatedClientsUseCase', () => {
-  let clientRepository: any;
+  let clientRepository: ClientRepository;
   let useCase: FindPaginatedClientsUseCase;
+
   const input: FindPaginatedParams = {
     page: 1,
     limit: 10,
     filters: [{ field: 'name', value: 'John', operator: FilterOperator.EQ }],
   };
 
-  beforeEach(() => {
-    clientRepository = {
+  beforeEach(async () => {
+    const clientRepositoryMock = {
       findPaginated: jest.fn(),
     };
-    useCase = new FindPaginatedClientsUseCase(clientRepository);
+
+    const moduleRef = await Test.createTestingModule({
+      providers: [
+        FindPaginatedClientsUseCase,
+        {
+          provide: ClientRepository,
+          useValue: clientRepositoryMock,
+        },
+      ],
+    }).compile();
+
+    clientRepository = moduleRef.get(ClientRepository);
+    useCase = moduleRef.get(FindPaginatedClientsUseCase);
   });
 
   it('should return paginated result from repository', async () => {
@@ -42,10 +54,15 @@ describe('FindPaginatedClientsUseCase', () => {
       limit: 10,
       page: 1,
       total: 10,
-      data: [],
+      data: entities,
     };
-    clientRepository.findPaginated.mockResolvedValue(paginatedResult);
+
+    jest
+      .spyOn(clientRepository, 'findPaginated')
+      .mockResolvedValue(paginatedResult);
+
     const result = await useCase.execute(input);
+
     expect(result).toBe(paginatedResult);
     expect(clientRepository.findPaginated).toHaveBeenCalledWith(input);
   });

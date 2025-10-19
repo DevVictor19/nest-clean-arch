@@ -1,23 +1,37 @@
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
 import { DeleteClientUseCase } from '../../delete-client-usecase';
+import { ClientRepository } from '../../../repositories';
+import { Test } from '@nestjs/testing';
 
 describe('DeleteClientUseCase', () => {
-  let clientRepository: any;
+  let clientRepository: ClientRepository;
   let useCase: DeleteClientUseCase;
+
   const input = { clientId: 'client-id-1' };
 
-  beforeEach(() => {
-    clientRepository = {
+  beforeEach(async () => {
+    const clientRepositoryMock = {
       delete: jest.fn(),
     };
-    useCase = new DeleteClientUseCase(clientRepository);
+
+    const moduleRef = await Test.createTestingModule({
+      providers: [
+        DeleteClientUseCase,
+        {
+          provide: ClientRepository,
+          useValue: clientRepositoryMock,
+        },
+      ],
+    }).compile();
+
+    clientRepository = moduleRef.get(ClientRepository);
+    useCase = moduleRef.get(DeleteClientUseCase);
   });
 
   it('should call repository delete with correct clientId', async () => {
-    clientRepository.delete.mockResolvedValue(undefined);
+    jest.spyOn(clientRepository, 'delete').mockResolvedValue(undefined);
+
     await expect(useCase.execute(input)).resolves.toBeUndefined();
+
     expect(clientRepository.delete).toHaveBeenCalledWith(input.clientId);
   });
 });

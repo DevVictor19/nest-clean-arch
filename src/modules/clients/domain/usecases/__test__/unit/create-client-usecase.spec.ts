@@ -1,13 +1,15 @@
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
 import { BadRequestError } from '@/core/domain/errors/base-errors';
 import { ClientEntity } from '../../../entities';
 import { CreateClientUseCase } from '../../create-client-usecase';
+import { ClientRepository } from '../../../repositories';
+import { AddressService } from '@/modules/addresses/domain/services';
+import { Test } from '@nestjs/testing';
+import { AddressEntity } from '@/modules/addresses/domain/entities';
 
 describe('CreateClientUseCase', () => {
-  let clientRepository: any;
-  let addressService: any;
+  let clientRepository: ClientRepository;
+  let addressService: AddressService;
   let useCase: CreateClientUseCase;
 
   const input = {
@@ -25,30 +27,48 @@ describe('CreateClientUseCase', () => {
     ],
   };
 
-  beforeEach(() => {
-    clientRepository = {
+  beforeEach(async () => {
+    const clientRepositoryMock = {
       findByEmail: jest.fn(),
       findByPhone: jest.fn(),
       create: jest.fn(),
     };
-    addressService = {
+
+    const addressServiceMock = {
       findByZipCodes: jest.fn(),
       createMany: jest.fn(),
     };
-    useCase = new CreateClientUseCase(clientRepository, addressService);
+
+    const moduleRef = await Test.createTestingModule({
+      providers: [
+        CreateClientUseCase,
+        {
+          provide: ClientRepository,
+          useValue: clientRepositoryMock,
+        },
+        {
+          provide: AddressService,
+          useValue: addressServiceMock,
+        },
+      ],
+    }).compile();
+
+    clientRepository = moduleRef.get(ClientRepository);
+    addressService = moduleRef.get(AddressService);
+    useCase = moduleRef.get(CreateClientUseCase);
   });
 
   it('should create a client when all checks pass', async () => {
-    clientRepository.findByEmail.mockResolvedValue(null);
-    clientRepository.findByPhone.mockResolvedValue(null);
-    addressService.findByZipCodes.mockResolvedValue([]);
+    jest.spyOn(clientRepository, 'findByEmail').mockResolvedValue(null);
+    jest.spyOn(clientRepository, 'findByPhone').mockResolvedValue(null);
+    jest.spyOn(addressService, 'findByZipCodes').mockResolvedValue([]);
     const createdClient = new ClientEntity({
       name: input.name,
       email: input.email,
       phone: input.phone,
     });
-    clientRepository.create.mockResolvedValue(createdClient);
-    addressService.createMany.mockResolvedValue(undefined);
+    jest.spyOn(clientRepository, 'create').mockResolvedValue(createdClient);
+    jest.spyOn(addressService, 'createMany').mockResolvedValue(undefined);
 
     const result = await useCase.execute(input);
     expect(result).toBeInstanceOf(ClientEntity);
@@ -71,9 +91,11 @@ describe('CreateClientUseCase', () => {
   });
 
   it('should throw BadRequestError if email already exists', async () => {
-    clientRepository.findByEmail.mockResolvedValue({});
-    clientRepository.findByPhone.mockResolvedValue(null);
-    addressService.findByZipCodes.mockResolvedValue([]);
+    jest
+      .spyOn(clientRepository, 'findByEmail')
+      .mockResolvedValue({} as ClientEntity);
+    jest.spyOn(clientRepository, 'findByPhone').mockResolvedValue(null);
+    jest.spyOn(addressService, 'findByZipCodes').mockResolvedValue([]);
 
     try {
       await useCase.execute(input);
@@ -86,9 +108,11 @@ describe('CreateClientUseCase', () => {
   });
 
   it('should throw BadRequestError if phone already exists', async () => {
-    clientRepository.findByEmail.mockResolvedValue(null);
-    clientRepository.findByPhone.mockResolvedValue({});
-    addressService.findByZipCodes.mockResolvedValue([]);
+    jest.spyOn(clientRepository, 'findByEmail').mockResolvedValue(null);
+    jest
+      .spyOn(clientRepository, 'findByPhone')
+      .mockResolvedValue({} as ClientEntity);
+    jest.spyOn(addressService, 'findByZipCodes').mockResolvedValue([]);
 
     try {
       await useCase.execute(input);
@@ -101,9 +125,11 @@ describe('CreateClientUseCase', () => {
   });
 
   it('should throw BadRequestError if address zip code already exists', async () => {
-    clientRepository.findByEmail.mockResolvedValue(null);
-    clientRepository.findByPhone.mockResolvedValue(null);
-    addressService.findByZipCodes.mockResolvedValue([{}]);
+    jest.spyOn(clientRepository, 'findByEmail').mockResolvedValue(null);
+    jest.spyOn(clientRepository, 'findByPhone').mockResolvedValue(null);
+    jest
+      .spyOn(addressService, 'findByZipCodes')
+      .mockResolvedValue([{}] as AddressEntity[]);
 
     try {
       await useCase.execute(input);
