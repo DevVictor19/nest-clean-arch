@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './modules/app-module';
 import { ValidationPipe, VersioningType } from '@nestjs/common';
+import { AppErrorExceptionFilter } from './core/api/filters';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -8,6 +9,7 @@ async function bootstrap() {
     type: VersioningType.URI,
   });
   app.setGlobalPrefix('api');
+  app.useGlobalFilters(new AppErrorExceptionFilter());
   app.useGlobalPipes(
     new ValidationPipe({
       transform: true,
